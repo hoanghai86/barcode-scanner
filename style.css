@@ -1,3 +1,11 @@
+body {
+  margin: 0;
+  font-family: Arial;
+  background: black;
+  overflow: hidden;
+}
+
+/* 📷 camera full */
 video {
   position: fixed;
   top: 0;
@@ -7,16 +15,17 @@ video {
   object-fit: cover;
 }
 
-/* 🔘 nút phải luôn nổi trên cùng */
+/* 🔘 BUTTONS - LUÔN NỔI */
 .controls {
   position: fixed;
   right: 15px;
-  bottom: 45%; /* ⬅ quan trọng: đẩy lên cao hơn sheet */
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   flex-direction: column;
   gap: 10px;
 
-  z-index: 9999; /* 🔥 luôn nổi */
+  z-index: 9999;
 }
 
 .controls button {
@@ -26,27 +35,50 @@ video {
   border: none;
   background: #00ff88;
   color: black;
-  font-size: 18px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  font-size: 16px;
+  font-weight: bold;
+
+  box-shadow: 0 6px 15px rgba(0,0,0,0.4);
 }
 
-.controls button:active {
-  transform: scale(0.9);
-}
-
-/* 📋 bottom sheet */
+/* 📋 BOTTOM SHEET (CỐ ĐỊNH, KHÔNG PHÌNH VÔ HẠN) */
 .sheet {
   position: fixed;
   bottom: 0;
   left: 0;
   width: 100%;
-  max-height: 35%; /* ⬅ giảm chiều cao */
+
+  height: 38%;          /* 🔥 FIX CỨNG CHIỀU CAO */
   background: white;
   color: black;
-  border-radius: 15px 15px 0 0;
-  padding: 10px;
-  overflow-y: auto;
 
-  z-index: 1000; /* thấp hơn controls */
-  box-shadow: 0 -5px 20px rgba(0,0,0,0.4);
+  border-radius: 16px 16px 0 0;
+  padding: 10px;
+
+  overflow: hidden;     /* 🔥 không cho phình */
+  z-index: 1000;
+
+  display: flex;
+  flex-direction: column;
+}
+
+/* 📜 LIST scroll bên trong */
+.sheet ul {
+  flex: 1;
+  overflow-y: auto;     /* 🔥 scroll bên trong */
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* item */
+.sheet li {
+  padding: 6px;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+}
+
+/* 📌 header cố định */
+.sheet h3 {
+  margin: 5px 0;
 }

@@ -12,52 +12,51 @@ function beep() {
   }
 }
 
-// ➕ ADD BARCODE
+// ➕ add barcode
 function addBarcode(code) {
   if (!barcodes.includes(code)) {
-    barcodes.unshift(code); // mới nhất lên đầu
+    barcodes.unshift(code);
     renderList();
   }
 }
 
-// 📋 RENDER LIST (QUAN TRỌNG)
+// 📋 render list
 function renderList() {
   const list = document.getElementById("list");
-  if (!list) return;
-
   list.innerHTML = "";
 
-  barcodes.forEach((code, index) => {
+  barcodes.forEach((code, i) => {
     const li = document.createElement("li");
-    li.style.padding = "8px";
-    li.style.borderBottom = "1px solid #ddd";
-    li.innerHTML = `
-      <b>${index + 1}.</b> ${code}
-    `;
+    li.textContent = `${i + 1}. ${code}`;
     list.appendChild(li);
   });
 }
 
-// 🧹 CLEAR LIST
+// 🧹 clear
 function clearList() {
   barcodes = [];
   renderList();
 }
 
-// 🚀 START SCANNER (GIỮ NGUYÊN ENGINE PRO)
+// 🚀 START SCANNER (FIX CODE128 + FAST)
 async function startScanner() {
   if (scanning) return;
   scanning = true;
 
   const video = document.getElementById("video");
 
+  // 🥇 BarcodeDetector (FAST MODE)
   if ("BarcodeDetector" in window) {
     const detector = new BarcodeDetector({
       formats: ["code_128", "ean_13", "ean_8"]
     });
 
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "environment" }
+      video: {
+        facingMode: "environment",
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      }
     });
 
     video.srcObject = stream;
@@ -66,10 +65,47 @@ async function startScanner() {
     const scan = async () => {
       if (!scanning) return;
 
-      const results = await detector.detect(video);
+      try {
+        const results = await detector.detect(video);
 
-      if (results.length > 0) {
-        const code = results[0].rawValue;
+        if (results.length > 0) {
+          const code = results[0].rawValue;
+
+          if (code !== lastScan) {
+            lastScan = code;
+
+            addBarcode(code);
+            beep();
+
+            setTimeout(() => lastScan = null, 900);
+          }
+        }
+      } catch (e) {}
+
+      requestAnimationFrame(scan);
+    };
+
+    scan();
+    return;
+  }
+
+  // 🥈 ZXING fallback (iPhone)
+  const codeReader = new ZXing.BrowserMultiFormatReader();
+
+  const devices = await codeReader.listVideoInputDevices();
+
+  const backCam =
+    devices.find(d =>
+      d.label.toLowerCase().includes("back") ||
+      d.label.toLowerCase().includes("rear")
+    )?.deviceId || devices[0].deviceId;
+
+  codeReader.decodeFromVideoDevice(
+    backCam,
+    video,
+    (result) => {
+      if (result) {
+        const code = result.text;
 
         if (code !== lastScan) {
           lastScan = code;
@@ -77,35 +113,21 @@ async function startScanner() {
           addBarcode(code);
           beep();
 
-          setTimeout(() => lastScan = null, 800);
+          setTimeout(() => lastScan = null, 900);
         }
       }
-
-      requestAnimationFrame(scan);
-    };
-
-    scan();
-  }
+    }
+  );
 }
 
-// ⛔ STOP SCANNER
+// ⛔ STOP
 function stopScanner() {
   scanning = false;
   lastScan = null;
 
   const video = document.getElementById("video");
-  if (video?.srcObject) {
+
+  if (video.srcObject) {
     video.srcObject.getTracks().forEach(t => t.stop());
   }
-}
-
-// 📊 EXPORT EXCEL
-function exportExcel() {
-  const data = barcodes.map(c => ({ Barcode: c }));
-
-  const ws = XLSX.utils.json_to_sheet(data);
-  const wb = XLSX.utils.book_new();
-
-  XLSX.utils.book_append_sheet(wb, ws, "Barcodes");
-  XLSX.writeFile(wb, "barcodes.xlsx");
 }

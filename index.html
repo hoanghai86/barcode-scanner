@@ -1,39 +1,79 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Scanner Pro</title>
-
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#000">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Barcode Scanner Pro</title>
 
   <script src="https://unpkg.com/@zxing/library@latest"></script>
 
-  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial;
+      background: #0f172a;
+      color: white;
+      text-align: center;
+    }
+
+    video {
+      width: 100%;
+      height: 50vh;
+      object-fit: cover;
+      background: black;
+    }
+
+    .frame {
+      position: absolute;
+      top: 18%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 260px;
+      height: 120px;
+      border: 2px solid #00ff88;
+      box-shadow: 0 0 0 9999px rgba(0,0,0,0.5);
+      border-radius: 10px;
+    }
+
+    button {
+      margin: 5px;
+      padding: 10px 14px;
+      border: none;
+      border-radius: 8px;
+      background: #22c55e;
+      color: black;
+      font-weight: bold;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      padding: 8px;
+      border-bottom: 1px solid #334155;
+    }
+  </style>
 </head>
 
 <body>
 
-  <!-- 📷 CAMERA FULLSCREEN -->
-  <video id="video" autoplay playsinline></video>
+  <h2>📦 Barcode Scanner</h2>
 
-  <!-- 🔲 SCAN FRAME -->
-  <div class  ="scan-frame"></div>
-
-  <!-- 🔘 BUTTONS FLOAT -->
-  <div class="fab">
-    <button onclick="startScanner()">▶</button>
-    <button onclick="stopScanner()">⛔</button>
-    <button onclick="exportExcel()">⬇</button>
+  <div style="position:relative;">
+    <video id="video" autoplay playsinline></video>
+    <div class="frame"></div>
   </div>
 
-  <!-- 📋 BOTTOM SHEET -->
-<div class="sheet">
-  <h3>📦 Scanned Codes</h3>
+  <div>
+    <button onclick="startScanner()">Start</button>
+    <button onclick="stopScanner()">Stop</button>
+    <button onclick="clearList()">Clear</button>
+  </div>
+
+  <h3>📋 Danh sách</h3>
   <ul id="list"></ul>
-  <button onclick="clearList()">Clear</button>
-</div>
 
   <script src="app.js"></script>
 

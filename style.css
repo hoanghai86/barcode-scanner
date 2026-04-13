@@ -1,11 +1,11 @@
 body {
   margin: 0;
-  overflow: hidden;
-  background: black;
   font-family: Arial;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  color: white;
 }
 
-/* 📷 camera full screen */
+/* 📷 camera */
 video {
   position: fixed;
   top: 0;
@@ -13,6 +13,7 @@ video {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  filter: brightness(1.05) contrast(1.1);
 }
 
 /* 🔲 scan frame */
@@ -22,40 +23,50 @@ video {
   left: 50%;
   transform: translate(-50%, -50%);
 
-  width: 260px;
+  width: 280px;
   height: 140px;
 
-  border: 2px solid red;
-  border-radius: 12px;
+  border: 2px solid #00ff88;
+  border-radius: 14px;
 
-  box-shadow: 0 0 0 1000px rgba(0,0,0,0.4);
-  animation: blink 1.2s infinite;
+  box-shadow:
+    0 0 0 9999px rgba(0,0,0,0.45),
+    0 0 15px #00ff88;
+
+  animation: pulse 1.2s infinite;
 }
 
-@keyframes blink {
-  0% { border-color: red; }
-  50% { border-color: lime; }
-  100% { border-color: red; }
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 9999px rgba(0,0,0,0.45), 0 0 10px #00ff88; }
+  50% { box-shadow: 0 0 0 9999px rgba(0,0,0,0.45), 0 0 25px #00ff88; }
+  100% { box-shadow: 0 0 0 9999px rgba(0,0,0,0.45), 0 0 10px #00ff88; }
 }
 
-/* 🔘 floating buttons */
+/* 🔘 buttons */
 .fab {
   position: fixed;
-  bottom: 120px;
   right: 15px;
+  bottom: 120px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .fab button {
   width: 55px;
   height: 55px;
   border-radius: 50%;
+
   border: none;
-  background: #111;
-  color: white;
+  background: #00ff88;
+  color: #000;
   font-size: 18px;
+
+  box-shadow: 0 5px 15px rgba(0,255,136,0.4);
+}
+
+.fab button:active {
+  transform: scale(0.9);
 }
 
 /* 📋 bottom sheet */
@@ -64,14 +75,28 @@ video {
   bottom: 0;
   left: 0;
   width: 100%;
-  max-height: 40%;
+
+  max-height: 45%;
   background: white;
-  border-radius: 20px 20px 0 0;
+  color: black;
+
+  border-radius: 18px 18px 0 0;
   padding: 10px;
+
   overflow-y: auto;
+  box-shadow: 0 -5px 20px rgba(0,0,0,0.4);
+}
+
+.sheet h3 {
+  margin: 5px 0 10px;
 }
 
 .sheet ul {
-  padding: 0;
   list-style: none;
+  padding: 0;
+}
+
+.sheet li {
+  padding: 8px;
+  border-bottom: 1px solid #eee;
 }

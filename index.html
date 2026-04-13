@@ -1,49 +1,41 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Barcode Scanner Pro</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scanner Pro</title>
 
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#000000">
+  <meta name="theme-color" content="#000">
 
   <script src="https://unpkg.com/@zxing/library@latest"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
   <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-  <h2>📦 Barcode Scanner Pro</h2>
+  <!-- 📷 CAMERA FULLSCREEN -->
+  <video id="video" autoplay playsinline></video>
 
-  <!-- camera -->
-  <div class="camera-container">
-    <video id="video" autoplay playsinline></video>
-    <div class="scanner-overlay"></div>
+  <!-- 🔲 SCAN FRAME -->
+  <div class="scan-frame"></div>
+
+  <!-- 🔘 BUTTONS FLOAT -->
+  <div class="fab">
+    <button onclick="startScanner()">▶</button>
+    <button onclick="stopScanner()">⛔</button>
+    <button onclick="exportExcel()">⬇</button>
   </div>
 
-  <!-- buttons -->
-  <div class="controls">
-    <button onclick="startScanner()">Start Scan</button>
-    <button onclick="stopScanner()">Stop</button>
-    <button onclick="exportExcel()">Export Excel</button>
+  <!-- 📋 BOTTOM SHEET -->
+  <div class="sheet">
+    <h3>📦 Scanned</h3>
+    <ul id="list"></ul>
     <button onclick="clearList()">Clear</button>
   </div>
 
-  <!-- list -->
-  <h3>📋 Danh sách mã</h3>
-  <ul id="list"></ul>
-
   <script src="app.js"></script>
-
-  <!-- PWA -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js');
-    }
-  </script>
 
 </body>
 </html>

@@ -169,22 +169,26 @@ function stopScanner() {
 
 
 // ============================
-// ⛔ EXPORT EXCEL
+// ⛔ COPY ALL
 // ============================
-function exportExcel() {
+function copyAll() {
   if (barcodes.length === 0) return;
 
-  const csvContent =
-    "data:text/csv;charset=utf-8," +
-    barcodes.map(e => `"${e}"`).join("\n");
+  const text = barcodes.join("\n");
 
-  const encodedUri = encodeURI(csvContent);
+  navigator.clipboard.writeText(text)
+    .then(() => {
+      alert("Đã copy toàn bộ barcode!");
+    })
+    .catch(() => {
+      // fallback cho máy không hỗ trợ clipboard
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
 
-  const link = document.createElement("a");
-  link.setAttribute("href", encodedUri);
-  link.setAttribute("download", "barcodes.csv");
-
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+      alert("Đã copy toàn bộ barcode!");
+    });
 }

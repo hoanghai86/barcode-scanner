@@ -1,21 +1,64 @@
 body {
   font-family: Arial;
   text-align: center;
-  padding: 10px;
+  background: #0f0f0f;
+  color: white;
+}
+
+h2 {
+  margin: 10px;
+}
+
+.camera-container {
+  position: relative;
+  display: flex;
+  justify-content: center;
 }
 
 video {
-  width: 100%;
+  width: 95%;
   max-width: 400px;
-  border: 2px solid #333;
-  border-radius: 10px;
+  border-radius: 12px;
 }
 
+/* 📦 khung scan */
+.scanner-overlay {
+  position: absolute;
+  top: 60px;
+  width: 250px;
+  height: 120px;
+
+  border: 2px solid red;
+  border-radius: 12px;
+
+  box-shadow: 0 0 0 9999px rgba(0,0,0,0.5);
+
+  animation: pulse 1.2s infinite;
+}
+
+@keyframes pulse {
+  0% { border-color: red; }
+  50% { border-color: lime; }
+  100% { border-color: red; }
+}
+
+/* buttons */
 .controls button {
-  margin: 5px;
-  padding: 10px;
+  margin: 6px;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 8px;
+  background: #1c1c1c;
+  color: white;
+  transition: 0.15s;
 }
 
+.controls button:active {
+  transform: scale(0.92);
+  background: #333;
+}
+
+/* list */
 ul {
   text-align: left;
   max-width: 400px;

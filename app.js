@@ -16,17 +16,14 @@ async function startScanner() {
   scanning = true;
 
   try {
-    const devices = await codeReader.listVideoInputDevices();
+    const constraints = {
+      video: {
+        facingMode: { exact: "environment" }
+      }
+    };
 
-    // 📷 ÉP CAMERA SAU (quan trọng)
-    const selectedDeviceId = devices.find(device =>
-      device.label.toLowerCase().includes('back') ||
-      device.label.toLowerCase().includes('rear') ||
-      device.label.toLowerCase().includes('environment')
-    )?.deviceId || devices[0].deviceId;
-
-    codeReader.decodeFromVideoDevice(
-      selectedDeviceId,
+    await codeReader.decodeFromConstraints(
+      constraints,
       video,
       (result, err) => {
         if (result) {
@@ -37,8 +34,19 @@ async function startScanner() {
     );
 
   } catch (error) {
-    console.error("Camera error:", error);
-    alert("Không mở được camera");
+    console.error(error);
+
+    // fallback nếu máy không support exact
+    codeReader.decodeFromVideoDevice(
+      null,
+      video,
+      (result, err) => {
+        if (result) {
+          addBarcode(result.text);
+          beep();
+        }
+      }
+    );
   }
 }
 

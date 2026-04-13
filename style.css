@@ -2,86 +2,81 @@
 body {
   margin: 0;
   font-family: Arial;
-  background: black;
+  background: #000;
   overflow: hidden;
 }
 
-/* 📷 CAMERA */
+/* 📷 CAMERA = 50% MÀN HÌNH */
 video {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
-  height: 100%;
+  height: 50vh;   /* 🔥 QUAN TRỌNG */
   object-fit: cover;
 }
 
-/* 🔘 CONTROLS - LUÔN NỔI TRÊN CÙNG */
-.controls {
-  position: fixed;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-
-  z-index: 99999;
-}
-
-.controls button {
-  width: 54px;
-  height: 54px;
-  border-radius: 50%;
-  border: none;
-
-  background: #00ff88;
-  color: black;
-  font-weight: bold;
-
-  box-shadow: 0 6px 15px rgba(0,0,0,0.4);
-}
-
-/* 📦 SHEET - KHÓA CỨNG VÙNG DƯỚI */
+/* 📦 LIST = 50% DƯỚI */
 .sheet {
   position: fixed;
   bottom: 0;
   left: 0;
   width: 100%;
+  height: 50vh;   /* 🔥 CHIA ĐÔI MÀN HÌNH */
 
-  height: 40vh; /* 🔥 KHÓA CHẶT CHIỀU CAO */
-  background: white;
-
-  border-radius: 16px 16px 0 0;
+  background: #fff;
+  color: #000;
 
   display: flex;
   flex-direction: column;
 
-  z-index: 1000;
+  border-radius: 16px 16px 0 0;
   overflow: hidden;
 }
 
-/* 📋 TITLE */
+/* title cố định */
 .sheet h3 {
   margin: 10px;
   flex-shrink: 0;
 }
 
-/* 📜 LIST CHỈ SCROLL BÊN TRONG */
+/* list scroll */
 .sheet ul {
-  flex: 1;              /* 🔥 QUAN TRỌNG */
-  overflow-y: auto;     /* 🔥 SCROLL NỘI BỘ */
-
+  flex: 1;
+  overflow-y: auto;
   margin: 0;
   padding: 0;
-
   list-style: none;
 }
 
-/* ITEM */
 .sheet li {
   padding: 8px;
   border-bottom: 1px solid #eee;
   font-size: 14px;
+}
+
+/* 🔘 BUTTONS nổi */
+.controls {
+  position: fixed;
+  right: 10px;
+  top: 25vh; /* nằm giữa camera */
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  z-index: 9999;
+}
+
+.controls button {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: none;
+
+  background: #00ff88;
+  color: #000;
+  font-weight: bold;
+
+  box-shadow: 0 6px 15px rgba(0,0,0,0.4);
 }

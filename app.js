@@ -36,10 +36,10 @@ function renderList() {
 
   list.innerHTML = "";
 
-  barcodes.forEach((code, i) => {
+  barcodes.forEach((code) => {
     const div = document.createElement("div");
     div.className = "item";
-    div.textContent = `${i + 1}. ${code}`;
+    div.textContent = code; // ❌ bỏ số thứ tự
     list.appendChild(div);
   });
 }
@@ -165,4 +165,26 @@ function stopScanner() {
     codeReader.reset();
     codeReader = null;
   }
+}
+
+
+// ============================
+// ⛔ EXPORT EXCEL
+// ============================
+function exportExcel() {
+  if (barcodes.length === 0) return;
+
+  const csvContent =
+    "data:text/csv;charset=utf-8," +
+    barcodes.map(e => `"${e}"`).join("\n");
+
+  const encodedUri = encodeURI(csvContent);
+
+  const link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", "barcodes.csv");
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }

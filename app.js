@@ -2,7 +2,6 @@ const codeReader = new ZXing.BrowserMultiFormatReader();
 const video = document.getElementById('video');
 
 let barcodes = [];
-let selectedDeviceId = null;
 let scanning = false;
 
 // 🔊 beep khi scan
@@ -11,30 +10,45 @@ function beep() {
   audio.play();
 }
 
-// ▶️ start scan
+// ▶️ START SCANNER (FIX CAMERA SAU)
 async function startScanner() {
   if (scanning) return;
-
   scanning = true;
 
-  const devices = await codeReader.listVideoInputDevices();
-  selectedDeviceId = devices[0].deviceId;
+  try {
+    const devices = await codeReader.listVideoInputDevices();
 
-  codeReader.decodeFromVideoDevice(selectedDeviceId, video, (result, err) => {
-    if (result) {
-      addBarcode(result.text);
-      beep();
-    }
-  });
+    // 📷 ÉP CAMERA SAU (quan trọng)
+    const selectedDeviceId = devices.find(device =>
+      device.label.toLowerCase().includes('back') ||
+      device.label.toLowerCase().includes('rear') ||
+      device.label.toLowerCase().includes('environment')
+    )?.deviceId || devices[0].deviceId;
+
+    codeReader.decodeFromVideoDevice(
+      selectedDeviceId,
+      video,
+      (result, err) => {
+        if (result) {
+          addBarcode(result.text);
+          beep();
+        }
+      }
+    );
+
+  } catch (error) {
+    console.error("Camera error:", error);
+    alert("Không mở được camera");
+  }
 }
 
-// ⏹ stop scan
+// ⏹ STOP SCANNER
 function stopScanner() {
   scanning = false;
   codeReader.reset();
 }
 
-// ➕ thêm mã
+// ➕ ADD BARCODE
 function addBarcode(code) {
   if (!barcodes.includes(code)) {
     barcodes.push(code);
@@ -42,27 +56,29 @@ function addBarcode(code) {
   }
 }
 
-// 📋 render list
+// 📋 RENDER LIST
 function renderList() {
   const list = document.getElementById("list");
   list.innerHTML = "";
 
-  barcodes.forEach(code => {
+  barcodes.forEach((code, index) => {
     const li = document.createElement("li");
-    li.textContent = code;
+    li.textContent = `${index + 1}. ${code}`;
     list.appendChild(li);
   });
 }
 
-// 🧹 clear
+// 🧹 CLEAR LIST
 function clearList() {
   barcodes = [];
   renderList();
 }
 
-// 📊 export excel
+// 📊 EXPORT EXCEL
 function exportExcel() {
-  const data = barcodes.map(code => ({ Barcode: code }));
+  const data = barcodes.map(code => ({
+    Barcode: code
+  }));
 
   const ws = XLSX.utils.json_to_sheet(data);
   const wb = XLSX.utils.book_new();
@@ -72,7 +88,25 @@ function exportExcel() {
   XLSX.writeFile(wb, "barcodes.xlsx");
 }
 
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("service-worker.js")
-    .then(() => console.log("Service Worker Registered"));
+// 💾 AUTO LOAD FROM LOCAL (optional)
+window.onload = () => {
+  const saved = localStorage.getItem("barcodes");
+  if (saved) {
+    barcodes = JSON.parse(saved);
+    renderList();
+  }
+};
+
+// 💾 AUTO SAVE
+function saveData() {
+  localStorage.setItem("barcodes", JSON.stringify(barcodes));
+}
+
+// cập nhật save mỗi lần add
+function addBarcode(code) {
+  if (!barcodes.includes(code)) {
+    barcodes.push(code);
+    saveData();
+    renderList();
+  }
 }

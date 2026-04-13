@@ -1,37 +1,50 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Barcode Scanner</title>
 
-  <link rel="stylesheet" href="style.css" />
-
-  <!-- ZXing -->
-  <script src="https://unpkg.com/@zxing/library@latest"></script>
-
-  <!-- SheetJS -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-
+  <!-- PWA -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#000000">
+
+  <!-- ZXing (barcode scanner) -->
+  <script src="https://unpkg.com/@zxing/library@latest"></script>
+
+  <!-- SheetJS (export Excel) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+  <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
   <h2>📷 Barcode Scanner</h2>
 
-  <video id="video"></video>
+  <!-- Camera view -->
+  <video id="video" autoplay></video>
 
+  <!-- Controls -->
   <div class="controls">
-    <button onclick="startScanner()">Start</button>
+    <button onclick="startScanner()">Start Scan</button>
     <button onclick="stopScanner()">Stop</button>
     <button onclick="exportExcel()">Export Excel</button>
     <button onclick="clearList()">Clear</button>
   </div>
 
-  <h3>📋 Danh sách mã</h3>
+  <h3>📋 Danh sách mã đã quét</h3>
   <ul id="list"></ul>
 
   <script src="app.js"></script>
+
+  <!-- Service Worker (PWA) -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(() => console.log('Service Worker Registered'));
+    }
+  </script>
+
 </body>
 </html>

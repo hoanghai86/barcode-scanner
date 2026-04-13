@@ -1,18 +1,21 @@
 let barcodes = [];
 let scanning = false;
-let lastScan = null;
 
-// 🔊 beep + vibration
+// ⛔ chống spam scan
+let lastScan = null;
+let lastScanTime = 0;
+const COOLDOWN = 1500; // 1.5 giây
+
 function beep() {
   const audio = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
+  audio.volume = 1;
   audio.play();
 
   if (navigator.vibrate) {
-    navigator.vibrate(100);
+    navigator.vibrate(80);
   }
 }
 
-// ➕ add barcode
 function addBarcode(code) {
   if (!barcodes.includes(code)) {
     barcodes.unshift(code);
@@ -20,7 +23,6 @@ function addBarcode(code) {
   }
 }
 
-// 📋 render list
 function renderList() {
   const list = document.getElementById("list");
   list.innerHTML = "";
@@ -32,20 +34,27 @@ function renderList() {
   });
 }
 
-// 🧹 clear
 function clearList() {
   barcodes = [];
   renderList();
 }
 
-// 🚀 START SCANNER (FIX CODE128 + FAST)
+// 🔥 VALIDATE CODE 128 (lọc rác)
+function isValidCode(code) {
+  if (!code) return false;
+  if (code.length < 4) return false;
+  if (code.length > 50) return false;
+  if (/^[0-9]+$/.test(code) && code.length < 6) return false; // lọc số rác ngắn
+  return true;
+}
+
+// 🚀 START SCANNER (STABLE MODE)
 async function startScanner() {
   if (scanning) return;
   scanning = true;
 
   const video = document.getElementById("video");
 
-  // 🥇 BarcodeDetector (FAST MODE)
   if ("BarcodeDetector" in window) {
     const detector = new BarcodeDetector({
       formats: ["code_128", "ean_13", "ean_8"]
@@ -71,13 +80,19 @@ async function startScanner() {
         if (results.length > 0) {
           const code = results[0].rawValue;
 
-          if (code !== lastScan) {
+          const now = Date.now();
+
+          // 🧠 LOCK LOGIC (QUAN TRỌNG)
+          if (
+            code &&
+            isValidCode(code) &&
+            (code !== lastScan || now - lastScanTime > COOLDOWN)
+          ) {
             lastScan = code;
+            lastScanTime = now;
 
             addBarcode(code);
             beep();
-
-            setTimeout(() => lastScan = null, 900);
           }
         }
       } catch (e) {}
@@ -86,48 +101,15 @@ async function startScanner() {
     };
 
     scan();
-    return;
   }
-
-  // 🥈 ZXING fallback (iPhone)
-  const codeReader = new ZXing.BrowserMultiFormatReader();
-
-  const devices = await codeReader.listVideoInputDevices();
-
-  const backCam =
-    devices.find(d =>
-      d.label.toLowerCase().includes("back") ||
-      d.label.toLowerCase().includes("rear")
-    )?.deviceId || devices[0].deviceId;
-
-  codeReader.decodeFromVideoDevice(
-    backCam,
-    video,
-    (result) => {
-      if (result) {
-        const code = result.text;
-
-        if (code !== lastScan) {
-          lastScan = code;
-
-          addBarcode(code);
-          beep();
-
-          setTimeout(() => lastScan = null, 900);
-        }
-      }
-    }
-  );
 }
 
 // ⛔ STOP
 function stopScanner() {
   scanning = false;
-  lastScan = null;
 
   const video = document.getElementById("video");
-
-  if (video.srcObject) {
+  if (video?.srcObject) {
     video.srcObject.getTracks().forEach(t => t.stop());
   }
 }

@@ -1,15 +1,25 @@
+
 let barcodes = [];
 let scanning = false;
-let lastScan = null;
 
-// beep nhẹ, nhanh
+// 🧠 state chống spam
+let lastScan = null;
+let lastScanTime = 0;
+let codeReader = null;
+
+const COOLDOWN = 1200; // chống rung / double scan
+
+// ============================
+// 🔊 beep (ổn định hơn)
+// ============================
 function beep() {
   const audio = new Audio("https://actions.google.com/sounds/v1/cartoon/pop.ogg");
-  audio.play();
+  audio.volume = 1;
+  audio.play().catch(() => {});
 }
 
 // ============================
-// 📦 ADD BARCODE
+// ➕ add barcode
 // ============================
 function addBarcode(code) {
   if (!barcodes.includes(code)) {
@@ -19,10 +29,12 @@ function addBarcode(code) {
 }
 
 // ============================
-// 📋 RENDER LIST
+// 📋 render list
 // ============================
 function renderList() {
   const list = document.getElementById("list");
+  if (!list) return;
+
   list.innerHTML = "";
 
   barcodes.forEach((code, i) => {
@@ -33,7 +45,53 @@ function renderList() {
 }
 
 // ============================
-// 🚀 START SCANNER (AUTO ENGINE)
+// 🧹 clear
+// ============================
+function clearList() {
+  barcodes = [];
+  renderList();
+}
+
+// ============================
+// 🧠 VALIDATE (lọc code rác)
+// ============================
+function isValidCode(code) {
+  if (!code) return false;
+  if (typeof code !== "string") return false;
+  if (code.length < 4) return false;
+  if (code.length > 60) return false;
+
+  // lọc số rác ngắn
+  if (/^\d+$/.test(code) && code.length < 6) return false;
+
+  return true;
+}
+
+// ============================
+// 🧠 HANDLE SCAN (CORE FIX)
+// ============================
+function handleScan(code) {
+  const now = Date.now();
+
+  if (!isValidCode(code)) return;
+
+  // chống spam + chống rung camera
+  if (
+    code === lastScan &&
+    now - lastScanTime < COOLDOWN
+  ) {
+    return;
+  }
+
+  lastScan = code;
+  lastScanTime = now;
+
+  addBarcode(code);
+  beep();
+}
+
+// ============================
+// 🚀 START SCANNER
 // ============================
 async function startScanner() {
   if (scanning) return;
@@ -41,108 +99,93 @@ async function startScanner() {
 
   const video = document.getElementById("video");
 
-  // ============================
-  // 🥇 1. TRY: BarcodeDetector (FAST MODE)
-  // ============================
-  if ("BarcodeDetector" in window) {
-    const detector = new BarcodeDetector({
-      formats: ["code_128", "ean_13", "ean_8", "qr_code"]
-    });
-
+  try {
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "environment" }
+      video: {
+        facingMode: "environment",
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      }
     });
 
     video.srcObject = stream;
     await video.play();
 
-    const scanFrame = async () => {
-      if (!scanning) return;
+    await new Promise(r => setTimeout(r, 500));
 
-      try {
-        const barcodesDetected = await detector.detect(video);
+    // ============================
+    // 🥇 BarcodeDetector MODE
+    // ============================
+    if ("BarcodeDetector" in window) {
+      const detector = new BarcodeDetector({
+        formats: ["code_128", "ean_13", "ean_8"]
+      });
 
-        if (barcodesDetected.length > 0) {
-          const code = barcodesDetected[0].rawValue;
+      const scanLoop = async () => {
+        if (!scanning) return;
 
-          // chống spam scan
-          if (code !== lastScan) {
-            lastScan = code;
+        try {
+          const results = await detector.detect(video);
 
-            addBarcode(code);
-            beep();
-
-            setTimeout(() => {
-              lastScan = null;
-            }, 800);
+          if (results && results.length > 0) {
+            handleScan(results[0].rawValue);
           }
+        } catch (e) {
+          console.log(e);
         }
-      } catch (e) {
-        console.error(e);
-      }
 
-      requestAnimationFrame(scanFrame);
-    };
+        requestAnimationFrame(scanLoop);
+      };
 
-    scanFrame();
-    return;
-  }
-
-  // ============================
-  // 🥈 2. FALLBACK: ZXing (iPhone fallback)
-  // ============================
-  const codeReader = new ZXing.BrowserMultiFormatReader();
-
-  const devices = await codeReader.listVideoInputDevices();
-
-  const selectedDeviceId = devices.find(d =>
-    d.label.toLowerCase().includes("back")
-  )?.deviceId || devices[0].deviceId;
-
-  codeReader.decodeFromVideoDevice(
-    selectedDeviceId,
-    video,
-    (result, err) => {
-      if (result) {
-        const code = result.text;
-
-        if (code !== lastScan) {
-          lastScan = code;
-
-          addBarcode(code);
-          beep();
-
-          setTimeout(() => {
-            lastScan = null;
-          }, 800);
-        }
-      }
+      scanLoop();
+      return;
     }
-  );
+
+    // ============================
+    // 🥈 ZXING fallback
+    // ============================
+    codeReader = new ZXing.BrowserMultiFormatReader();
+
+    const devices = await codeReader.listVideoInputDevices();
+
+    const backCam =
+      devices.find(d =>
+        d.label.toLowerCase().includes("back") ||
+        d.label.toLowerCase().includes("rear")
+      )?.deviceId || devices[0].deviceId;
+
+    codeReader.decodeFromVideoDevice(
+      backCam,
+      video,
+      (result) => {
+        if (result) {
+          handleScan(result.text);
+        }
+      }
+    );
+
+  } catch (err) {
+    console.error(err);
+    alert("Không mở được camera");
+  }
 }
 
 // ============================
-// ⛔ STOP SCANNER
+// ⛔ STOP SCANNER (FIX CLEAN)
 // ============================
 function stopScanner() {
   scanning = false;
   lastScan = null;
+  lastScanTime = 0;
 
   const video = document.getElementById("video");
 
-  if (video.srcObject) {
-    video.srcObject.getTracks().forEach(track => track.stop());
+  if (video?.srcObject) {
+    video.srcObject.getTracks().forEach(t => t.stop());
   }
 
-  if (window.codeReader) {
-    window.codeReader?.reset?.();
+  if (codeReader) {
+    codeReader.reset();
+    codeReader = null;
   }
-}
-
-// ============================
-// 🧹 CLEAR
-// ============================
-function clearList() {
-  barcodes = [];
-  renderList();
 }

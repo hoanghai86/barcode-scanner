@@ -12,9 +12,12 @@ video {
   top: 0;
   left: 0;
   width: 100%;
-  height: 50vh;   /* 🔥 QUAN TRỌNG */
+  height: 50vh;
+
   object-fit: cover;
-}
+
+  background: #111; /* 🔥 tránh màn đen trống */
+} 
 
 /* 📦 LIST = 50% DƯỚI */
 .sheet {

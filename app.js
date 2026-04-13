@@ -55,6 +55,10 @@ async function startScanner() {
 
     video.srcObject = stream;
     await video.play();
+    document.getElementById("loading").style.display = "none";
+    video.setAttribute("playsinline", true);
+    video.setAttribute("muted", true);
+    video.setAttribute("autoplay", true);
 
     const scanFrame = async () => {
       if (!scanning) return;

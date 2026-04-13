@@ -1,44 +1,28 @@
-
 let barcodes = [];
 let scanning = false;
-
-// ========================
-// ⛔ anti spam control
-// ========================
 let lastScan = null;
-let lastScanTime = 0;
-const COOLDOWN = 1200; // 1.2s chống rung + trùng
 
-// ========================
-// 🔊 beep + vibration
-// ========================
+// beep nhẹ, nhanh
 function beep() {
-  const audio = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
-  audio.volume = 1;
-  audio.play().catch(() => {});
-
-  if (navigator.vibrate) {
-    navigator.vibrate(80);
-  }
+  const audio = new Audio("https://actions.google.com/sounds/v1/cartoon/pop.ogg");
+  audio.play();
 }
 
-// ========================
-// ➕ add barcode
-// ========================
+// ============================
+// 📦 ADD BARCODE
+// ============================
 function addBarcode(code) {
   if (!barcodes.includes(code)) {
-    barcodes.unshift(code);
+    barcodes.push(code);
     renderList();
   }
 }
 
-// ========================
-// 📋 render list
-// ========================
+// ============================
+// 📋 RENDER LIST
+// ============================
 function renderList() {
   const list = document.getElementById("list");
-  if (!list) return;
-
   list.innerHTML = "";
 
   barcodes.forEach((code, i) => {
@@ -48,138 +32,117 @@ function renderList() {
   });
 }
 
-// ========================
-// 🧹 clear list
-// ========================
-function clearList() {
-  barcodes = [];
-  renderList();
-}
-
-// ========================
-// 🧠 validate barcode (lọc rác)
-// ========================
-function isValidCode(code) {
-  if (!code) return false;
-  if (typeof code !== "string") return false;
-  if (code.length < 4) return false;
-  if (code.length > 60) return false;
-
-  // loại số rác quá ngắn
-  if (/^\d+$/.test(code) && code.length < 6) return false;
-
-  return true;
-}
-
-// ========================
-// 🚀 START SCANNER (STABLE ENGINE)
-// ========================
+// ============================
+// 🚀 START SCANNER (AUTO ENGINE)
+// ============================
 async function startScanner() {
   if (scanning) return;
   scanning = true;
 
   const video = document.getElementById("video");
 
-  try {
+  // ============================
+  // 🥇 1. TRY: BarcodeDetector (FAST MODE)
+  // ============================
+  if ("BarcodeDetector" in window) {
+    const detector = new BarcodeDetector({
+      formats: ["code_128", "ean_13", "ean_8", "qr_code"]
+    });
+
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: "environment",
-        width: { ideal: 1280 },
-        height: { ideal: 720 }
-      }
+      video: { facingMode: "environment" }
     });
 
     video.srcObject = stream;
     await video.play();
 
-    await new Promise(r => setTimeout(r, 500));
+    const scanFrame = async () => {
+      if (!scanning) return;
 
-    // ========================
-    // 🥇 BarcodeDetector mode
-    // ========================
-    if ("BarcodeDetector" in window) {
-      const detector = new BarcodeDetector({
-        formats: ["code_128", "ean_13", "ean_8"]
-      });
+      try {
+        const barcodesDetected = await detector.detect(video);
 
-      const loop = async () => {
-        if (!scanning) return;
+        if (barcodesDetected.length > 0) {
+          const code = barcodesDetected[0].rawValue;
 
-        try {
-          const results = await detector.detect(video);
+          // chống spam scan
+          if (code !== lastScan) {
+            lastScan = code;
 
-          if (results && results.length > 0) {
-            const code = results[0].rawValue;
+            addBarcode(code);
+            beep();
 
-            handleScan(code);
+            setTimeout(() => {
+              lastScan = null;
+            }, 800);
           }
-        } catch (e) {
-          console.log("scan error", e);
         }
+      } catch (e) {
+        console.error(e);
+      }
 
-        requestAnimationFrame(loop);
-      };
+      requestAnimationFrame(scanFrame);
+    };
 
-      loop();
-      return;
-    }
-
-    // ========================
-    // 🥈 fallback (nếu cần ZXing)
-    // ========================
-    console.warn("BarcodeDetector not supported");
-
-  } catch (err) {
-    console.error("Camera error:", err);
-    alert("Không mở được camera");
-  }
-}
-
-// ========================
-// 🧠 HANDLE SCAN (IMPORTANT FIX)
-// ========================
-function handleScan(code) {
-  const now = Date.now();
-
-  if (!isValidCode(code)) return;
-
-  // chống trùng + chống rung
-  if (code === lastScan && now - lastScanTime < COOLDOWN) {
+    scanFrame();
     return;
   }
 
-  lastScan = code;
-  lastScanTime = now;
+  // ============================
+  // 🥈 2. FALLBACK: ZXing (iPhone fallback)
+  // ============================
+  const codeReader = new ZXing.BrowserMultiFormatReader();
 
-  addBarcode(code);
-  beep();
+  const devices = await codeReader.listVideoInputDevices();
+
+  const selectedDeviceId = devices.find(d =>
+    d.label.toLowerCase().includes("back")
+  )?.deviceId || devices[0].deviceId;
+
+  codeReader.decodeFromVideoDevice(
+    selectedDeviceId,
+    video,
+    (result, err) => {
+      if (result) {
+        const code = result.text;
+
+        if (code !== lastScan) {
+          lastScan = code;
+
+          addBarcode(code);
+          beep();
+
+          setTimeout(() => {
+            lastScan = null;
+          }, 800);
+        }
+      }
+    }
+  );
 }
 
-// ========================
+// ============================
 // ⛔ STOP SCANNER
-// ========================
+// ============================
 function stopScanner() {
   scanning = false;
   lastScan = null;
 
   const video = document.getElementById("video");
 
-  if (video && video.srcObject) {
-    video.srcObject.getTracks().forEach(t => t.stop());
+  if (video.srcObject) {
+    video.srcObject.getTracks().forEach(track => track.stop());
+  }
+
+  if (window.codeReader) {
+    window.codeReader?.reset?.();
   }
 }
 
-// ========================
-// 📊 EXPORT EXCEL (nếu bạn có xlsx lib)
-// ========================
-function exportExcel() {
-  if (!window.XLSX) return;
-
-  const data = barcodes.map(c => ({ Barcode: c }));
-
-  const ws = XLSX.utils.json_to_sheet(data);
-  const wb = XLSX.utils.book_new();
-
-  XLSX.utils.book_append_sheet(wb, ws, "Barcodes");
-  XLSX.writeFile(wb, "barcodes.xlsx");
+// ============================
+// 🧹 CLEAR
+// ============================
+function clearList() {
+  barcodes = [];
+  renderList();
 }

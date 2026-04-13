@@ -1,18 +1,6 @@
 let barcodes = [];
 let scanning = false;
 let lastScan = null;
-let audioUnlocked = false;
-
-// 🔓 unlock audio (fix iPhone)
-function unlockAudio() {
-  if (audioUnlocked) return;
-
-  const audio = new Audio("https://actions.google.com/sounds/v1/cartoon/pop.ogg");
-  audio.play().then(() => {
-    audio.pause();
-    audioUnlocked = true;
-  });
-}
 
 // 🔊 beep + vibration
 function beep() {
@@ -20,46 +8,49 @@ function beep() {
   audio.play();
 
   if (navigator.vibrate) {
-    navigator.vibrate(120);
+    navigator.vibrate(100);
   }
 }
 
-// ➕ add barcode
+// ➕ ADD BARCODE
 function addBarcode(code) {
   if (!barcodes.includes(code)) {
-    barcodes.push(code);
+    barcodes.unshift(code); // mới nhất lên đầu
     renderList();
   }
 }
 
-// 📋 render list
+// 📋 RENDER LIST (QUAN TRỌNG)
 function renderList() {
   const list = document.getElementById("list");
+  if (!list) return;
+
   list.innerHTML = "";
 
-  barcodes.forEach((code, i) => {
+  barcodes.forEach((code, index) => {
     const li = document.createElement("li");
-    li.textContent = `${i + 1}. ${code}`;
+    li.style.padding = "8px";
+    li.style.borderBottom = "1px solid #ddd";
+    li.innerHTML = `
+      <b>${index + 1}.</b> ${code}
+    `;
     list.appendChild(li);
   });
 }
 
-// 🧹 clear
+// 🧹 CLEAR LIST
 function clearList() {
   barcodes = [];
   renderList();
 }
 
-// 🚀 START SCANNER (PRO MODE)
+// 🚀 START SCANNER (GIỮ NGUYÊN ENGINE PRO)
 async function startScanner() {
   if (scanning) return;
   scanning = true;
 
-  unlockAudio();
-
   const video = document.getElementById("video");
 
-  // 🥇 FAST MODE (Android Chrome)
   if ("BarcodeDetector" in window) {
     const detector = new BarcodeDetector({
       formats: ["code_128", "ean_13", "ean_8"]
@@ -94,55 +85,21 @@ async function startScanner() {
     };
 
     scan();
-    return;
   }
-
-  // 🥈 FALLBACK ZXING (iPhone)
-  const codeReader = new ZXing.BrowserMultiFormatReader();
-
-  const devices = await codeReader.listVideoInputDevices();
-
-  const selectedDeviceId =
-    devices.find(d => d.label.toLowerCase().includes("back"))?.deviceId
-    || devices[0].deviceId;
-
-  codeReader.decodeFromVideoDevice(
-    selectedDeviceId,
-    video,
-    (result) => {
-      if (result) {
-        const code = result.text;
-
-        if (code !== lastScan) {
-          lastScan = code;
-
-          addBarcode(code);
-          beep();
-
-          setTimeout(() => lastScan = null, 800);
-        }
-      }
-    }
-  );
 }
 
-// ⛔ STOP
+// ⛔ STOP SCANNER
 function stopScanner() {
   scanning = false;
   lastScan = null;
 
   const video = document.getElementById("video");
-
-  if (video.srcObject) {
+  if (video?.srcObject) {
     video.srcObject.getTracks().forEach(t => t.stop());
-  }
-
-  if (window.codeReader) {
-    window.codeReader?.reset?.();
   }
 }
 
-// 📊 export excel
+// 📊 EXPORT EXCEL
 function exportExcel() {
   const data = barcodes.map(c => ({ Barcode: c }));
 
@@ -150,6 +107,5 @@ function exportExcel() {
   const wb = XLSX.utils.book_new();
 
   XLSX.utils.book_append_sheet(wb, ws, "Barcodes");
-
   XLSX.writeFile(wb, "barcodes.xlsx");
 }

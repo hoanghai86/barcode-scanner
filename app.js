@@ -207,3 +207,9 @@ function shareData() {
     alert("Thiết bị không hỗ trợ share trực tiếp");
   }
 }
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/sw.js")
+    .then(() => console.log("SW registered"))
+    .catch(err => console.log("SW error", err));
+}

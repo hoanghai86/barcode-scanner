@@ -192,3 +192,18 @@ function copyAll() {
       alert("Đã copy toàn bộ barcode!");
     });
 }
+
+function shareData() {
+  if (barcodes.length === 0) return;
+
+  const text = barcodes.join("\n");
+
+  if (navigator.share) {
+    navigator.share({
+      title: "Danh sách barcode",
+      text: text
+    });
+  } else {
+    alert("Thiết bị không hỗ trợ share trực tiếp");
+  }
+}
